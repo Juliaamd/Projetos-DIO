@@ -1,0 +1,149 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iomanip>
+#include <fstream>
+using namespace std;
+
+class Conta {
+protected:
+    float saldo;
+    vector<string> historico;
+
+public:
+    Conta(float saldoInicial) : saldo(saldoInicial) {}
+
+    virtual string getTipo() const = 0;
+
+    virtual bool sacar(float valor) {
+        if (valor <= saldo) {
+            saldo -= valor;
+            ostringstream oss;
+            oss << fixed << setprecision(2) << "Saque: -R$" << valor;
+            historico.push_back(oss.str());
+            return true;
+        }
+        return false;
+    }
+
+    virtual void depositar(float valor) {
+        saldo += valor;
+        ostringstream oss;
+        oss << fixed << setprecision(2) << "Depósito: +R$" << valor;
+        historico.push_back(oss.str());
+    }
+
+    float getSaldo() const {
+        return saldo;
+    }
+
+    virtual void mostrarHistorico() const {
+        cout << "\nHistórico da " << getTipo() << ":\n";
+        for (const auto& linha : historico)
+            cout << linha << endl;
+    }
+
+    virtual ~Conta() {}
+};
+
+class ContaCorrente : public Conta {
+public:
+    ContaCorrente(float saldoInicial) : Conta(saldoInicial) {}
+    string getTipo() const override { return "Conta Corrente"; }
+};
+
+class ContaSalario : public Conta {
+public:
+    ContaSalario(float saldoInicial) : Conta(saldoInicial) {}
+    string getTipo() const override { return "Conta Salário"; }
+};
+
+class ContaPoupanca : public Conta {
+public:
+    ContaPoupanca(float saldoInicial) : Conta(saldoInicial) {}
+    string getTipo() const override { return "Conta Poupança"; }
+};
+
+class ContaInvestimento : public Conta {
+public:
+    ContaInvestimento(float saldoInicial) : Conta(saldoInicial) {}
+    string getTipo() const override { return "Conta Investimento"; }
+};
+
+// ======= UTILS.HPP =======
+void verificarESacar(Conta* conta, float valor, ofstream& logFile) {
+    cout << fixed << setprecision(2);
+    cout << "\nTentando sacar R$" << valor << " da " << conta->getTipo() << "...\n";
+
+    if (!conta->sacar(valor)) {
+        cerr << "[LOG DE ERRO] Saldo insuficiente na " << conta->getTipo() << "!\n";
+        logFile << "[ERRO] Saldo insuficiente na " << conta->getTipo() << "\n";
+    } else {
+        cout << "Saque realizado com sucesso. Novo saldo: R$" << conta->getSaldo() << "\n";
+    }
+}
+
+void realizarDeposito(Conta* conta) {
+    float valor;
+    cout << fixed << setprecision(2);
+    cout << "Digite o valor para depósito na " << conta->getTipo() << ": R$";
+    cin >> valor;
+    conta->depositar(valor);
+    cout << "Depósito realizado com sucesso. Saldo atual: R$" << conta->getSaldo() << "\n";
+}
+
+// ======= MAIN.CPP =======
+int main() {
+    vector<Conta*> contas;
+
+    contas.push_back(new ContaCorrente(0));
+    contas.push_back(new ContaSalario(0));
+    contas.push_back(new ContaPoupanca(0));
+    contas.push_back(new ContaInvestimento(0));
+
+    ofstream logFile("log.txt");
+
+    int escolha;
+    do {
+        cout << "\n--- Menu ---\n";
+        cout << "0 - Sair\n";
+        cout << "1 - Sacar da Conta Corrente\n";
+        cout << "2 - Sacar da Conta Salário\n";
+        cout << "3 - Sacar da Conta Poupança\n";
+        cout << "4 - Sacar da Conta Investimento\n";
+        cout << "5 - Depositar na Conta Corrente\n";
+        cout << "6 - Depositar na Conta Salário\n";
+        cout << "7 - Depositar na Conta Poupança\n";
+        cout << "8 - Depositar na Conta Investimento\n";
+        cout << "9 - Mostrar histórico de todas as contas\n";
+        cout << "Escolha uma opção: ";
+        cin >> escolha;
+
+        if (escolha >= 1 && escolha <= 4) {
+            float valor;
+            cout << fixed << setprecision(2);
+            cout << "Digite o valor para saque: R$";
+            cin >> valor;
+            verificarESacar(contas[escolha - 1], valor, logFile);
+        }
+        else if (escolha >= 5 && escolha <= 8) {
+            realizarDeposito(contas[escolha - 5]);
+        }
+        else if (escolha == 9) {
+            for (auto conta : contas) {
+                conta->mostrarHistorico();
+            }
+        }
+        else if (escolha != 0) {
+            cout << "Opção inválida, tente novamente.\n";
+        }
+    } while (escolha != 0);
+
+    logFile.close();
+
+    for (auto c : contas)
+        delete c;
+
+    return 0;
+}
