@@ -24,4 +24,10 @@ Este é um projeto prático de um sistema bancário simples, desenvolvido como p
 - Formatação com `ostringstream` e `iomanip`
 
 ## 📂 Estrutura do Projeto
-
+SistemaBancario/
+├── main.cpp # Função principal com menu e interação com usuário
+├── Conta.hpp # Declaração das classes base e derivadas (contas)
+├── Conta.cpp # Implementação dos métodos das classes de conta
+├── utils.hpp # Declaração de funções auxiliares (saque, depósito)
+├── utils.cpp # Implementação das funções auxiliares
+└── log.txt # Arquivo gerado em tempo de execução para logs de erro
